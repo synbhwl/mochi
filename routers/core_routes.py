@@ -1,5 +1,4 @@
 from fastapi import (
-    FastAPI,
     Depends,
     HTTPException,
     status,
@@ -19,7 +18,6 @@ from core.database import Url_table, Clicks, create_session
 
 from sqlmodel import SQLModel, create_engine, Field, Session, select, func  # noqa
 settings = get_settings()
-# app = FastAPI()
 router = APIRouter()
 
 base_url = settings.base_url
@@ -123,7 +121,8 @@ async def show_analytics(url: str, session: Session = Depends(create_session)):
         media_type="application/json"
     )
 
-# this route handles the rediction of the user + the incrementation logic of the counting feature
+# this route handles the rediction of the user +
+# the incrementation logic of the counting feature
 # it adds a click object everytime a the shortened link is clicked/used
 
 

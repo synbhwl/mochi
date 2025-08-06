@@ -1,7 +1,8 @@
 from sqlmodel import SQLModel, create_engine, Field, Session, select, func  # noqa
 from typing import Optional
 
-# url_table holds the data regarding the core logic of the app, namely shortening and redirection
+# url_table holds the data regarding the core logic of the app,
+# namely shortening and redirection
 
 
 class Url_table(SQLModel, table=True):
