@@ -5,14 +5,16 @@ from fastapi import (
     status,
     Query
 )
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, Response
 from pydantic import BaseModel, Field
 from typing import Optional
-# from dotenv import load_dotenv
 import secrets
 from core.config import get_settings
+from datetime import datetime
+from urllib.parse import urlparse
+import json
 
-from sqlmodel import SQLModel, create_engine, Field, Session, select  # noqa
+from sqlmodel import SQLModel, create_engine, Field, Session, select, func  # noqa
 settings = get_settings()
 app = FastAPI()
 
@@ -27,6 +29,12 @@ class Url_table(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     long: str
     code: Optional[str] = Field(default=None, unique=True, index=True)
+
+
+class Clicks(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    url_code: str
+    timestamp: str
 
 
 engine = create_engine('sqlite:///data.db')
@@ -92,6 +100,27 @@ async def direct_shortener(
         return HTMLResponse(content=home_content)
 
 
+@app.get('/analytics')
+async def show_analytics(url: str, session: Session = Depends(create_session)):
+    code = urlparse(url).path.strip('/')
+
+    clicks = session.exec(select(func.count()).where(
+        Clicks.url_code == code)).first()
+
+    history = session.exec(select(Clicks).where(Clicks.url_code == code)).all()
+
+    timestamps = [t.timestamp for t in history]
+
+    analytics = {
+        "shortened_url": url,
+        "total_clicks": clicks,
+        "time_history": timestamps
+    }
+    return Response(
+        content=json.dumps(analytics, indent=2),
+        media_type="application/json"
+    )
+
 @app.get('/{code}')
 async def redirect(
     code: str,
@@ -102,5 +131,11 @@ async def redirect(
     if result is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="no such url found")
+
+    time = datetime.utcnow().isoformat()
+    click = Clicks(timestamp=time, url_code=code)
+    session.add(click)
+    session.commit()
+    session.refresh(click)
 
     return RedirectResponse(result.long)
