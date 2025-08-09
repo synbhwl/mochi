@@ -47,7 +47,7 @@ def generate_code(length: int = 6) -> str:
 @router.post('/shorten')
 @limiter.limit("5/minute")
 async def shorten_url(
-    req: Request,
+    request: Request,
     url: Url_req,
     session: Session = Depends(create_session)
 ):
@@ -57,7 +57,6 @@ async def shorten_url(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="""err: missing field in request body 'url',
             eg: '{"url":"your url"}'""")
-
     code = generate_code()
     newURL = Url_table(
         long=url.long,
@@ -91,6 +90,7 @@ async def shorten_url(
 @router.get('/')
 @limiter.limit("5/minute")
 async def direct_shortener(
+    request: Request,
     url: Optional[str] = Query(None),
     session: Session = Depends(create_session)
 ):

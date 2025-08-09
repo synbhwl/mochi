@@ -15,7 +15,7 @@ from slowapi.util import get_remote_address
 
 from core.database import Clicks, create_session
 
-from sqlmodel import SQLModel, create_engine, Field, Session, select, func  # noqa
+from sqlmodel import SQLModel, create_engine, Field, Session, select, func, distinct  # noqa
 
 load_dotenv()
 router = APIRouter()
@@ -44,6 +44,10 @@ async def show_analytics(url: str, session: Session = Depends(create_session)):
         clicks = session.exec(select(func.count()).where(
             Clicks.url_code == code)).first()
 
+        unique_visits = session.exec(
+            select(func.count(distinct(Clicks.visitor_id))).where(Clicks.url_code == code)
+        ).first()
+
         history = session.exec(select(Clicks).where(
             Clicks.url_code == code)).all()
     except Exception as e:
@@ -58,6 +62,7 @@ async def show_analytics(url: str, session: Session = Depends(create_session)):
     analytics = {
         "shortened_url": url,
         "total_clicks": clicks,
+        "unique_visits": unique_visits,
         "time_history": timestamps
     }
     return Response(

@@ -2,13 +2,15 @@ from fastapi import (
     Depends,
     HTTPException,
     status,
-    APIRouter
+    APIRouter,
+    Request
 )
 from fastapi.responses import RedirectResponse
 from pydantic import Field
 from datetime import datetime
 from dotenv import load_dotenv
 import logging
+from slowapi.util import get_remote_address
 
 from core.database import Url_table, Clicks, create_session
 
@@ -23,6 +25,7 @@ logger = logging.getLogger()
 
 @router.get('/{code}')
 async def redirect(
+    request: Request,
     code: str,
     session: Session = Depends(create_session)
 ):
@@ -38,7 +41,8 @@ async def redirect(
             status_code=status.HTTP_404_NOT_FOUND, detail="err: no such url found in the database")
 
     time = datetime.utcnow().isoformat()
-    click = Clicks(timestamp=time, url_code=code)
+    visitor_id = get_remote_address(request)
+    click = Clicks(timestamp=time, url_code=code, visitor_id=visitor_id)
     try:
         session.add(click)
         session.commit()
