@@ -3,7 +3,8 @@ from fastapi import (
     HTTPException,
     status,
     Query,
-    APIRouter
+    APIRouter,
+    Request
 )
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -11,6 +12,8 @@ import secrets
 import os
 from dotenv import load_dotenv
 import logging
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from core.database import Url_table, create_session
 
@@ -29,6 +32,8 @@ if not base_url:
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         detail="err: base_url missing")
 
+limiter = Limiter(key_func=get_remote_address)
+
 
 class Url_req(BaseModel):
     long: str
@@ -40,7 +45,9 @@ def generate_code(length: int = 6) -> str:
 
 
 @router.post('/shorten')
+@limiter.limit("5/minute")
 async def shorten_url(
+    req: Request,
     url: Url_req,
     session: Session = Depends(create_session)
 ):
@@ -82,6 +89,7 @@ async def shorten_url(
 
 
 @router.get('/')
+@limiter.limit("5/minute")
 async def direct_shortener(
     url: Optional[str] = Query(None),
     session: Session = Depends(create_session)

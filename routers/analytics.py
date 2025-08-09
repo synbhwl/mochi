@@ -10,6 +10,8 @@ from urllib.parse import urlparse
 import json
 from dotenv import load_dotenv
 import logging
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from core.database import Clicks, create_session
 
@@ -20,6 +22,8 @@ router = APIRouter()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
+
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get('/analytics')
