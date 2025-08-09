@@ -40,6 +40,10 @@ async def redirect(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="err: no such url found in the database")
 
+    if result.expiry is not None and result.expiry < datetime.utcnow():
+        logger.error("err: url expired")
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="err: url expired")
+
     time = datetime.utcnow().isoformat()
     visitor_id = get_remote_address(request)
     click = Clicks(timestamp=time, url_code=code, visitor_id=visitor_id)

@@ -6,6 +6,7 @@ class Url_table(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     long: str
     code: Optional[str] = Field(default=None, unique=True, index=True)
+    expiry: Optional[str] = Field(default=None, nullable=True, index=True)
 
 
 class Clicks(SQLModel, table=True):
