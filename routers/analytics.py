@@ -63,7 +63,7 @@ async def show_analytics(url: str, session: Session = Depends(create_session)):
         "shortened_url": url,
         "total_clicks": clicks,
         "unique_visits": unique_visits,
-        "time_history": timestamps
+        "clicks_time_history": timestamps
     }
     return Response(
         content=json.dumps(analytics, indent=2),

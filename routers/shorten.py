@@ -37,6 +37,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 class Url_req(BaseModel):
     long: str
+    custom_code: Optional[str] = Field(default=None)
 
 
 def generate_code(length: int = 6) -> str:
@@ -57,7 +58,17 @@ async def shorten_url(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="""err: missing field in request body 'url',
             eg: '{"url":"your url"}'""")
-    code = generate_code()
+
+    if url.custom_code:
+        if session.exec(select(Url_table).where(Url_table.code == url.custom_code)).first():
+            logger.error("err: user typed custom_code that is already in use")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="err: custom_code already in use, try another")
+        else:
+            code = url.custom_code
+    else:
+        code = generate_code()
     newURL = Url_table(
         long=url.long,
         code=code
@@ -92,10 +103,22 @@ async def shorten_url(
 async def direct_shortener(
     request: Request,
     url: Optional[str] = Query(None),
+    custom_code: Optional[str] = Query(None),
     session: Session = Depends(create_session)
 ):
     if url:
-        code = generate_code()
+        if custom_code:
+            if session.exec(select(Url_table).where(Url_table.code == custom_code)).first():
+                logger.error("err: user typed custom_code that is already in use")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="err: custom_code already in use, try another")
+            else:
+                code = custom_code
+
+        else:
+            code = generate_code()
+
         newURL = Url_table(
             long=url,
             code=code
