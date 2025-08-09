@@ -6,6 +6,7 @@ from fastapi import (
     APIRouter,
     Request
 )
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 from typing import Optional
 import secrets
@@ -108,7 +109,7 @@ async def shorten_url(
             f"err: database error while trying to add new URL: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"err: database error while trying to add new URL")
+            detail="err: database error while trying to add new URL")
 
     return {"new_url": f"this is you url {base_url}/{code}"}
 
@@ -169,9 +170,9 @@ async def direct_shortener(
                 f"err: database error while trying to add new URL:{str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"err: database error while trying to add new URL")
+                detail="err: database error while trying to add new URL")
 
         short_url = f"{base_url}/{code}"
         return {"short_url": short_url}
     else:
-        return "welcome to mochi"
+        return RedirectResponse(url="/home")

@@ -11,7 +11,7 @@ class Url_table(SQLModel, table=True):
 
 class Clicks(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    url_code: str
+    url_code: str = Field(foreign_key="url_table.code")
     timestamp: str
     visitor_id: str
 
