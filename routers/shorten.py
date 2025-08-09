@@ -5,18 +5,14 @@ from fastapi import (
     Query,
     APIRouter
 )
-from fastapi.responses import RedirectResponse, Response
 from pydantic import BaseModel, Field
 from typing import Optional
 import secrets
-from datetime import datetime
-from urllib.parse import urlparse
-import json
 import os
 from dotenv import load_dotenv
 import logging
 
-from core.database import Url_table, Clicks, create_session
+from core.database import Url_table, create_session
 
 from sqlmodel import SQLModel, create_engine, Field, Session, select, func  # noqa
 
@@ -111,76 +107,3 @@ async def direct_shortener(
         return {"short_url": short_url}
     else:
         return "welcome to mochi"
-
-
-# this route returns a basic analytics json schema for now
-@router.get('/analytics')
-async def show_analytics(url: str, session: Session = Depends(create_session)):
-    if not url:
-        logger.error("err: missing query parameter 'url'")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="err: missing query parameter 'url', eg: /analytics?url=your_url")
-
-    code = urlparse(url).path.strip('/')
-    if not code:
-        logger.error("err: code missing at the end of shortened url")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="err: code missing at the end of shortened url, eg: /U4q0dX")
-    try:
-        clicks = session.exec(select(func.count()).where(
-            Clicks.url_code == code)).first()
-
-        history = session.exec(select(Clicks).where(
-            Clicks.url_code == code)).all()
-    except Exception as e:
-        logger.error(
-            f"err: either total_clicks or timestamp_history doesn't exist: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"err: either total_clicks or timestamp_history doesn't exist: {str(e)}")
-
-    timestamps = [t.timestamp for t in history]
-
-    analytics = {
-        "shortened_url": url,
-        "total_clicks": clicks,
-        "time_history": timestamps
-    }
-    return Response(
-        content=json.dumps(analytics, indent=2),
-        media_type="application/json"
-    )
-
-
-@router.get('/{code}')
-async def redirect(
-    code: str,
-    session: Session = Depends(create_session)
-):
-    if not code:
-        logger.error("err: missing path parameter 'code'")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="err: missing path parameter 'code', eg: /U4q0dX")
-
-    result = session.exec(select(Url_table).where(
-        Url_table.code == code)).first()
-    if result is None:
-        logger.error("err: no such url found in the database")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="err: no such url found in the database")
-
-    time = datetime.utcnow().isoformat()
-    click = Clicks(timestamp=time, url_code=code)
-    try:
-        session.add(click)
-        session.commit()
-        session.refresh(click)
-    except Exception as e:
-        logger.error(
-            f"err: database error while trying to add new click:{str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"err: database error while trying to add new click: {str(e)}")
-
-    return RedirectResponse(result.long)
