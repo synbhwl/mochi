@@ -49,6 +49,7 @@ def generate_code(length: int = 6) -> str:
 
 def get_expiry_time(period: str):
     expiry_map = {
+        "1min": timedelta(minutes=1),  # remove this !
         "1h": timedelta(hours=1),
         "1d": timedelta(days=1),
         "1w": timedelta(days=7),
@@ -59,7 +60,7 @@ def get_expiry_time(period: str):
         return None
     delta = expiry_map.get(period.lower())
     if delta is None:
-        return ValueError("err: period code not recognise, choose one from 1h, 1d, 1w, 1m")
+        return ValueError("err: period code not recognised, choose one from 1h, 1d, 1w, 1m")
     return datetime.utcnow() + delta
 
 
@@ -107,7 +108,7 @@ async def shorten_url(
             f"err: database error while trying to add new URL: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"err: database error while trying to add new URL: {str(e)}")
+            detail=f"err: database error while trying to add new URL")
 
     return {"new_url": f"this is you url {base_url}/{code}"}
 
@@ -168,7 +169,7 @@ async def direct_shortener(
                 f"err: database error while trying to add new URL:{str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"err: database error while trying to add new URL: {str(e)}")
+                detail=f"err: database error while trying to add new URL")
 
         short_url = f"{base_url}/{code}"
         return {"short_url": short_url}
