@@ -13,7 +13,7 @@ import logging
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from core.database import Clicks, create_session
+from core.database import Clicks, create_session, Url_table
 
 from sqlmodel import SQLModel, create_engine, Field, Session, select, func, distinct  # noqa
 
@@ -40,6 +40,12 @@ async def show_analytics(url: str, session: Session = Depends(create_session)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="err: code missing at the end of shortened url, eg: /U4q0dX")
+
+    if session.exec(select(Url_table).where(Url_table.code == code)).first() is None:
+        logger.error("err: couldn't show analytics: no such url found in database")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="err: couldn't show analytics: no such url found in database")
     try:
         clicks = session.exec(select(func.count()).where(
             Clicks.url_code == code)).first()
