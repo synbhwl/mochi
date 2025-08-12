@@ -38,7 +38,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 
 class Url_req(BaseModel):
-    long: str
+    url: str
     custom_code: Optional[str] = Field(default=None)
     expiry: Optional[str] = Field(default=None)
 
@@ -66,7 +66,7 @@ def get_expiry_time(period: str):
 
 
 @router.post('/shorten')
-@limiter.limit("5/minute")
+@limiter.limit("25/minute")
 async def shorten_url(
     request: Request,
     url: Url_req,
@@ -78,12 +78,6 @@ async def shorten_url(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="""err: missing field in request body 'url', eg: '{"url":"your url"}'""")
 
-    if url.expiry:
-        try:
-            expiry_on = get_expiry_time(url.expiry)
-        except ValueError as e:
-            logger.error(str(e))
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     if url.custom_code:
         if session.exec(select(Url_table).where(Url_table.code == url.custom_code)).first():
@@ -95,11 +89,23 @@ async def shorten_url(
             code = url.custom_code
     else:
         code = generate_code()
-    newURL = Url_table(
-        long=url.long,
-        code=code,
-        expiry=expiry_on
-    )
+
+    if url.expiry:
+        try:
+            expiry_on = get_expiry_time(url.expiry)
+        except ValueError as e:
+            logger.error(str(e))
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        newURL = Url_table(
+            long=url.url,
+            code=code,
+            expiry=expiry_on
+        )
+    else:
+        newURL = Url_table(
+            long=url.url,
+            code=code
+        )
     try:
         session.add(newURL)
         session.commit()
@@ -111,7 +117,7 @@ async def shorten_url(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="err: database error while trying to add new URL")
 
-    return {"new_url": f"this is you url {base_url}/{code}"}
+    return {"short_url": f"{base_url}/{code}"}
 
 # violating rest api principles to make a direct shortener
 # i made it so the user can type the url in the address bar
@@ -125,8 +131,8 @@ async def shorten_url(
 # and have avoided excessive modularization of it
 
 
-@router.get('/')
-@limiter.limit("5/minute")
+@router.get('/direct')
+@limiter.limit("25/minute")
 async def direct_shortener(
     request: Request,
     url: Optional[str] = Query(None),
@@ -134,45 +140,42 @@ async def direct_shortener(
     expiry: Optional[str] = Query(None),
     session: Session = Depends(create_session)
 ):
-    if url:
-        if custom_code:
-            if session.exec(select(Url_table).where(Url_table.code == custom_code)).first():
-                logger.error("err: user typed custom_code that is already in use")
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="err: custom_code already in use, try another")
-            else:
-                code = custom_code
-
-        else:
-            code = generate_code()
-
-        if expiry:
-            try:
-                expiry_on = get_expiry_time(expiry)
-            except ValueError as e:
-                logger.error(str(e))
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-        else:
-            expiry_on = None
-
-        newURL = Url_table(
-            long=url,
-            code=code,
-            expiry=expiry_on
-        )
-        try:
-            session.add(newURL)
-            session.commit()
-            session.refresh(newURL)
-        except Exception as e:
-            logger.error(
-                f"err: database error while trying to add new URL:{str(e)}")
+    if custom_code:
+        if session.exec(select(Url_table).where(Url_table.code == custom_code)).first():
+            logger.error("err: user typed custom_code that is already in use")
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="err: database error while trying to add new URL")
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="err: custom_code already in use, try another")
+        else:
+            code = custom_code
 
-        short_url = f"{base_url}/{code}"
-        return {"short_url": short_url}
     else:
-        return RedirectResponse(url="/home")
+        code = generate_code()
+
+    if expiry:
+        try:
+            expiry_on = get_expiry_time(expiry)
+        except ValueError as e:
+            logger.error(str(e))
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    else:
+        expiry_on = None
+
+    newURL = Url_table(
+        long=url,
+        code=code,
+        expiry=expiry_on
+    )
+    try:
+        session.add(newURL)
+        session.commit()
+        session.refresh(newURL)
+    except Exception as e:
+        logger.error(
+            f"err: database error while trying to add new URL:{str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="err: database error while trying to add new URL")
+
+    short_url = f"{base_url}/{code}"
+    return {"short_url": short_url}

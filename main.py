@@ -7,6 +7,7 @@ from routers.crud import router as crud
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
@@ -19,3 +20,11 @@ app.include_router(greet)
 app.include_router(shorten)
 app.include_router(analytics)
 app.include_router(redirect)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

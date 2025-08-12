@@ -1,6 +1,10 @@
 from sqlmodel import SQLModel, create_engine, Field, Session, select, func  # noqa
 from typing import Optional
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+database = os.getenv("DATABASE_URL")
 
 class Url_table(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -16,7 +20,7 @@ class Clicks(SQLModel, table=True):
     visitor_id: str
 
 
-engine = create_engine('sqlite:///data.db')
+engine = create_engine(database)
 SQLModel.metadata.create_all(engine)
 
 

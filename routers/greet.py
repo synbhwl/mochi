@@ -36,7 +36,7 @@ def database_cleanup(session: Session):
         logger.error(f"err: error while cleaning database: {str(e)}")
 
 
-@router.get("/home")
+@router.get("/")
 async def show_home_page(session: Session = Depends(create_session)):
     database_cleanup(session)  # this needs to be reconsidered
     return "welcome to mochi"
