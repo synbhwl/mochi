@@ -54,6 +54,8 @@ async def show_analytics(url: str, session: Session = Depends(create_session)):
             select(func.count(distinct(Clicks.visitor_id))).where(Clicks.url_code == code)
         ).first()
 
+        long_url = session.exec(select(Url_table).where(Url_table.code==code)).first()
+
         history = session.exec(select(Clicks).where(
             Clicks.url_code == code)).all()
     except Exception as e:
@@ -67,6 +69,7 @@ async def show_analytics(url: str, session: Session = Depends(create_session)):
 
     analytics = {
         "shortened_url": url,
+        "redirects_to": long_url.long,
         "total_clicks": clicks,
         "unique_visits": unique_visits,
         "clicks_time_history": timestamps
