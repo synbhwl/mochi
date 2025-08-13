@@ -100,27 +100,6 @@ Response schema example:
 }
 ```
 
-## Endpoint '/delete'
-Method: DELETE
-Request body schema:
-```
-{
-  "url": "string"
-}
-```
-Eg:
-```
-{
-  "url": "our_url/2Kl7-T"
-}
-```
-Response schema example:
-```
-{
-  "message": "success: url deleted successfully"
-}
-```
-
 ## Endpoint '/{code}'
 Method: GET
 
@@ -158,14 +137,6 @@ curl -X 'GET' \
 curl -X 'GET' \
   'our_url/analytics?url=our_url/synbhwl' \
   -H 'accept: application/json'
-
-curl -X 'DELETE' \
-  'our_url/delete' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "url": "our_url/synbhwl"
-}'
 
 Note: use the redirect route in the browser by simply entering the short url and pressing enter.
 ```

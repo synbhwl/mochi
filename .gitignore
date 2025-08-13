@@ -5,3 +5,4 @@ data.db
 curl.txt
 setup.cfg
 .ruff_cache/
+routers/crud.py
