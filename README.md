@@ -49,7 +49,7 @@ or as simply
 Response schema example:
 ```
 {
-  "short_url": "our_url/8q_GS0"
+  "short_url": "https://mochi-production.up.railway.app/8q_GS0"
 }
 ```
 
@@ -57,21 +57,21 @@ Response schema example:
 Method: GET
 Query parameter schema:
 ```
-our_url/direct?url=the_long_url&custom_code=string&expiry=string
+https://mochi-production.up.railway.app/direct?url=the_long_url&custom_code=string&expiry=string
 ```
 Note: 'url' is a mendatory parameter while 'custom_code' and 'expiry' are optional. url only takes a full url that starts with https:// or http://
 Eg with all parameters:
 ```
-our_url/direct?url=https://musings-production.up.railway.app&custom_code=rants&expiry=1w
+https://mochi-production.up.railway.app/direct?url=https://musings-production.up.railway.app&custom_code=rants&expiry=1w
 ```
 or as simply
 ```
-our_url/direct?url=https://musings-production.up.railway.app
+https://mochi-production.up.railway.app/direct?url=https://musings-production.up.railway.app
 ```
 Response schema example:
 ```
 {
-  "short_url": "our_url/8q_GS0"
+  "short_url": "https://mochi-production.up.railway.app/8q_GS0"
 }
 ```
 
@@ -79,17 +79,17 @@ Response schema example:
 Method: GET
 Query parameter schema:
 ```
-our_url/direct?url=the_short_url
+https://mochi-production.up.railway.app/direct?url=the_short_url
 ```
 Note: 'url' is a mendatory parameter. url only takes a full url that starts with https:// or http://
 Eg with all parameters:
 ```
-our_url/direct?url=https://musings-production.up.railway.app
+https://mochi-production.up.railway.app/direct?url=https://musings-production.up.railway.app
 ```
 Response schema example:
 ```
 {
-  "shortened_url": "our_url/2Kl7-T",
+  "shortened_url": "https://mochi-production.up.railway.app/2Kl7-T",
   "redirects_to": "https://musings-production.up.railway.app",
   "total_clicks": 2,
   "unique_visits": 1,
@@ -107,7 +107,7 @@ Note: this route recieves the request when the user types the short url in the b
 
 Eg:
 ```
-our_url/2Kl7-T
+https://mochi-production.up.railway.app/2Kl7-T
 ```
 
 ## Endpoint '/'
@@ -117,11 +117,11 @@ Response: "welcome to mochi"
 ### curl command examples
 ```
 curl -X 'GET' \
-  'our_url/' \
+  'https://mochi-production.up.railway.app/' \
   -H 'accept: application/json'
 
 curl -X 'POST' \
-  'our_url/shorten' \
+  'https://mochi-production.up.railway.app/shorten' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -131,11 +131,11 @@ curl -X 'POST' \
 }'
 
 curl -X 'GET' \
-  'our_url/direct?url=https://github.com/synbhwl&custom_code=synbhwl&expiry=1w' \
+  'https://mochi-production.up.railway.app/direct?url=https://github.com/synbhwl&custom_code=synbhwl&expiry=1w' \
   -H 'accept: application/json'
 
 curl -X 'GET' \
-  'our_url/analytics?url=our_url/synbhwl' \
+  'https://mochi-production.up.railway.app/analytics?url=https://mochi-production.up.railway.app/synbhwl' \
   -H 'accept: application/json'
 
 Note: use the redirect route in the browser by simply entering the short url and pressing enter.
